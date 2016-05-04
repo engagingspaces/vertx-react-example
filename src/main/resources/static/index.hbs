@@ -1,0 +1,18 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Vertx React Server</title>
+        <link rel="stylesheet" href="/static/css/main.css"/>
+    </head>
+    <body>
+        <div id='root'><div>{{{root}}}</div></div>
+        <script type="text/javascript" src="/static/js/app.js"></script>
+        <script type="text/javascript">
+            /*<![CDATA[*/
+            document.addEventListener("DOMContentLoaded", function () {
+                window.renderOnClient("{{initialData}}");
+            }, false);
+            /*]]>*/
+        </script>
+    </body>
+</html>

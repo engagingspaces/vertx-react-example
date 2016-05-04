@@ -1,0 +1,70 @@
+buildscript {
+    repositories {
+        maven {
+            url 'http://dev.proactive.li:8081/artifactory/plugins-release'
+        }
+    }
+    dependencies {
+        classpath 'com.moowork.gradle:gradle-node-plugin:0.12'
+        classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.3'
+    }
+}
+
+repositories {
+    maven {
+        url 'http://dev.proactive.li:8081/artifactory/libs-release'
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'idea'
+apply plugin: 'com.moowork.node'
+apply plugin: 'com.github.johnrengelman.shadow'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+dependencies {
+    compile 'io.vertx:vertx-core:3.2.1'
+    compile 'io.vertx:vertx-web:3.2.1'
+    compile 'io.vertx:vertx-web-templ-handlebars:3.2.1'
+}
+
+npm_install {
+    args = ['--no-optional']
+}
+
+npm_run {
+    args = ['--no-optional', 'webpack']
+}
+
+processResources.dependsOn('npm_install', 'npm_run')
+
+task copyFront(type: Copy) {
+    from "$sourceSets.main.resources.asPath/static"
+    into "$sourceSets.main.output.resourcesDir/static"
+    exclude "node_modules"
+}
+
+shadowJar {
+    mustRunAfter jar
+    dependsOn copyFront
+
+    destinationDir =  file("$projectDir/build/shadow")
+    classifier = 'all'
+    manifest {
+        attributes 'Main-Class': 'io.vertx.core.Launcher'
+        attributes 'Main-Verticle': 'org.example.MainVerticle'
+    }
+    mergeServiceFiles {
+        include 'META-INF/services/io.vertx.core.spi.VerticleFactory'
+    }
+}
+
+assemble.dependsOn shadowJar
+
+task start(dependsOn: shadowJar) {
+    doLast {
+        javaexec { main = "-jar"; args += project.tasks.shadowJar.archivePath }
+    }
+}
